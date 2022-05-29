@@ -66,10 +66,9 @@
 import {ref, onMounted} from 'vue';
 import {useLocRes} from "../composables/useLocRes";
 import getMiddleByLevel from "../helpers/getMiddleByLevel";
-const user = useState('user');
+const user = useUserInfo();
 const tableToSend = ref(null);
-const {$i18n, $showToast} = useNuxtApp();
-const  {t} = $i18n().global;
+const {$t, $showToast} = useNuxtApp();
 const emit = defineEmits(['togglePreload']);
 
 const props = defineProps({
@@ -79,26 +78,22 @@ const props = defineProps({
 
 async function sendEmail(){
 
-  const formData = new FormData();
-
-  formData.append("info", tableToSend.value.innerHTML);
-
   try {
     emit('togglePreload');
     const res = await $fetch('/api/email', {
       method: 'POST',
-      body: formData,
+      body: {info: tableToSend.value.innerHTML, subject: $t('email_subject')},
     })
-    $showToast(t('email_sent'), 'success');
+    $showToast($t('email_sent'), 'success');
     emit('togglePreload');
   } catch (e) {
     if (e.response.status !== 401) {
 
-      $showToast(t('error_try_later'), 'error');
+      $showToast($t('error_try_later'), 'error');
 
     } else {
 
-      $showToast(t('error_auth'), 'error');
+      $showToast($t('error_auth'), 'error');
     }
   }
 }

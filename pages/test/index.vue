@@ -8,7 +8,7 @@
     </h1>
     <template v-if="countedRes">
       <h1 class="lg-heading">{{$t('result')}} <span class="italic">
-        {{ countedRes.value }} / {{ countedRes.result }}
+        {{useLocRes(countedRes.value)}} / {{ countedRes.result }}
       </span></h1>
       <button @click="getDetail" class="mt-1 button success">{{$t('detail')}}</button>
     </template>
@@ -66,14 +66,14 @@
 <script setup>
 import {ref} from 'vue';
 import {useRouter, useRoute} from "vue-router";
+import {useLocRes} from "../../composables/useLocRes";
 
 const cached = useCachedinfo();
 const route = useRoute();
 const router = useRouter();
-const user = useState('user');
+const user = useUserInfo();
 const showDetails = useDetail();
-const {$i18n, ssrContext, $showToast, $logOut, $getDate} = useNuxtApp();
-const {t} = $i18n().global;
+const {$t, ssrContext, $showToast, $logOut, $getDate, $socket} = useNuxtApp();
 const showModal = useSign();
 const results = ref([]);
 const inputs = ref({});
@@ -84,28 +84,19 @@ const finalRes = ref([]);
 const uniqueKeys = ref([]);
 const timerOff = ref(false);
 const countedRes = ref(null);
-const showPlayer = ref(false);
 const curColor = ref('transparent');
 const textColor = ref('#fff');
 const terms = ref([3, 4, 5, 7, 10, 18, 20, 23, 24, 25, 27, 30, 38, 40, 49]);
 
-if (ssrContext) {
-  const {res, url} = ssrContext;
-  res.writeHead(302, {
-    Location: '/'
-  });
-  res.end();
-}
-
 const {data, error} = await useAsyncData('test', () => $fetch('/api/test',
-    {params: {topicId: route.params.topicId}}));
+    {params: {topicId: route.params.topicId}}), {initialCache: false});
 
 if(process.client){
   if (error.value) {
     if(error.value.response.status === 403){
-      $showToast(t('attemptsExc'), 'error', 5000);
+      $showToast($t('attemptsExc'), 'error', 5000);
     }else{
-      $showToast(t('error_auth'), 'error', 2000);
+      $showToast($t('error_auth'), 'error', 2000);
       $logOut();
     }
     router.replace('/404')
@@ -132,7 +123,7 @@ function changeCol(color) {
 function answered() {
 
   if (timerOff.value) {
-    $showToast(t('expired'), 'error', 5000);
+    $showToast($t('expired'), 'error', 5000);
     return
   }
 
@@ -170,21 +161,18 @@ function toResults() {
 async function getResults() {
   try {
 
-    const formData = new FormData();
-    formData.append('data', JSON.stringify({
-      userId: data.value.userId,
-      topicId: route.params.topicId,
-      groupId: route.params.groupId,
-      uniqueKeys: uniqueKeys.value,
-      finalRes: finalRes.value,
-      inputs: inputs.value,
-      startedAt: startedAt.value,
-      duration: $getDate((Date.now() - startedAt.value), 'mm:ss')
-    }));
-
-    const {finalResults, level, addedID} = await $fetch('/api/result', {
+    const {finalResults, level, addedID, socketRes} = await $fetch('/api/result', {
       method: 'POST',
-      body: formData,
+      body: {
+        userId: data.value.userId,
+        topicId: route.params.topicId,
+        groupId: route.params.groupId,
+        uniqueKeys: uniqueKeys.value,
+        finalRes: finalRes.value,
+        inputs: inputs.value,
+        startedAt: startedAt.value,
+        duration: $getDate((Date.now() - startedAt.value), 'mm:ss')
+      },
     })
 
     const index = cached.value.findIndex( (element) => element[addedID]);
@@ -193,11 +181,13 @@ async function getResults() {
       cached.value.splice(index, 1);
     }
 
-    countedRes.value = finalResults;
+    countedRes.value = {...finalResults};
 
     user.value.level = level;
 
     resultId.value = addedID;
+
+    $socket.emit("result-added", socketRes);
 
   } catch (e) {
     if (e.response.status === 401) {
@@ -208,7 +198,7 @@ async function getResults() {
     if (e.response.status === 403) {
       $logOut();
       showModal.value = true;
-      $showToast(t('userCanNotPass'), 'error', 5000);
+      $showToast($t('userCanNotPass'), 'error', 5000);
     }
   }
 }
@@ -217,15 +207,12 @@ async function getMessage() {
 
   try {
 
-    const formData = new FormData();
-    formData.append('data', JSON.stringify({
-      userId: data.value.userId,
-      uniqueKeys: uniqueKeys.value, finalRes: finalRes.value
-    }));
-
     const {phrase} = await $fetch('/api/message', {
       method: 'POST',
-      body: formData,
+      body: {
+        userId: data.value.userId,
+        uniqueKeys: uniqueKeys.value, finalRes: finalRes.value
+      },
     })
 
     if (phrase !== null) {
@@ -242,7 +229,7 @@ async function getMessage() {
     if (e.response.status === 403) {
       $logOut();
       showModal.value = true;
-      $showToast(t('userCanNotPass'), 'error', 5000);
+      $showToast($t('userCanNotPass'), 'error', 5000);
     }
 
   }
@@ -257,8 +244,10 @@ function getDetail() {
   showDetails.value = true;
 }
 
+const title = computed(()=>  $t('sphere') + ' — ' + $t('test'))
+
 useMeta({
-  title: t('sphere') + ' — ' + t('test')
+  title: title
 })
 
 </script>

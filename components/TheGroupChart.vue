@@ -1,21 +1,19 @@
 <template>
   <div>
-    <div style="display: flex; justify-content: center; gap: 10px; align-items: center">
+    <div class="options-box">
       <div class="form-group mt-2">
-<!--        <label for="from">{{ $t('date') }}</label>-->
-        <select @change="setDates" v-model="fromDate" class="form-control" style="max-width: 300px" id="from">
+        <select @change="setDates" v-model="fromDate" class="form-control" id="from">
           <option v-for="(date, i) in dates" :key="i" :value="date">{{ $getDate(date, 'DD MMM YYYY') }}
           </option>
         </select>
       </div>
       <div class="form-group mt-2">
-<!--        <label for="to">{{ $t('date') }}</label>-->
-        <select @change="setDates" v-model="toDate" class="form-control" style="max-width: 300px" id="to">
+        <select @change="setDates" v-model="toDate" class="form-control" id="to">
           <option v-for="(date, i) in dates" :key="i" :value="date">{{ $getDate(date, 'DD MMM YYYY') }}
           </option>
         </select>
       </div>
-      <button @click="clearFilter" class="btn-light mb-1"  style="align-self: flex-end;">{{ $t('reset') }}</button>
+      <button @click="clearFilter" class="btn-light mb-1">{{ $t('reset') }}</button>
     </div>
 
 
@@ -35,21 +33,20 @@
 <script setup>
 import {ref, onMounted, computed, onBeforeUnmount} from "vue";
 
-const {$i18n, $getDate, $startDay, $endDay} = useNuxtApp();
-const {t} = $i18n().global;
+const {$t, $getDate, $startDay, $endDay, $socket} = useNuxtApp();
 //const dates = ref([]);
 const fromDate = ref(0);
 const toDate = ref(0);
 
 const props = defineProps({
-  results: Object,
+  results: Array,
   //level: String,
   type: String,
-  group: {type: String, default: ''}
+  group: {type: String, default: ''},
+  groupId: {type: String, default: ''}
 })
 
 const chartRef = ref(null);
-
 
 const filtered = ref([]);
 
@@ -59,6 +56,26 @@ filtered.value.push(...props.results);
 
 onBeforeUnmount(()=>{
   chartRef.value.destroy();
+  $socket.removeAllListeners();
+})
+
+onMounted(()=>{
+
+  $socket.on("add-result", (data) => {
+
+    if(data.groupId === props.groupId){
+
+      props.results.push(data);
+
+      filtered.value.push(data);
+
+      updateChart();
+
+      setDates();
+    }
+
+  });
+
 })
 
 const dates = computed(
@@ -135,14 +152,14 @@ line.value =  {
             title: function (context) {
               //console.log(filtered.value.length);
               //if(filtered.value.length > 0){
-                return t('test')+': ' + filtered.value[context[0].dataIndex].topic + ' (' + filtered.value[context[0].dataIndex].level + ')'
+                return $t('test')+': ' + filtered.value[context[0].dataIndex].topic + ' (' + filtered.value[context[0].dataIndex].level + ')'
              // }
              // return t('test')+': ' + props.results[context[0].dataIndex].topic + ' (' + props.results[context[0].dataIndex].level + ')'
             },
             label: function (context) {
 
              // if(filtered.value.length > 0){
-                return t('score')+': ' + filtered.value[context.dataIndex].result.final
+                return $t('score')+': ' + filtered.value[context.dataIndex].result.final
              // }
              // return t('score')+': ' + props.results[context.dataIndex].result.final
             },
@@ -167,13 +184,13 @@ line.value =  {
         x: {
           title: {
             display: false,
-            text: t('test')
+            text: $t('test')
           }
         },
         y: {
           title: {
             display: true,
-            text: t('perf')
+            text: $t('perf')
           },
           min: 0,
           max: 100,
@@ -206,12 +223,12 @@ line.value =  {
 function updateChart() {
 
   line.value.options.plugins.title = {
-    text: t('level')+': ', //+ props.level,
+    text: $t('level')+': ', //+ props.level,
     display: true
   }
   line.value.options.scales.y.title= {
     display: true,
-    text: t('perf')
+    text: $t('perf')
   }
 
   chartRef.value.update(250)
@@ -248,3 +265,22 @@ const exportChart = () => {
 
 
 </script>
+
+<style scoped lang="scss">
+
+.options-box {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  align-items: center;
+
+  select{
+    max-width: 300px;
+  }
+
+  button {
+    align-self: flex-end;
+  }
+}
+
+</style>

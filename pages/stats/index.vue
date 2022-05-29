@@ -76,35 +76,26 @@
 
 <script setup>
 import {ref, defineAsyncComponent, shallowRef} from 'vue';
-import {useRouter, useRoute} from "vue-router";
-import getCookie from "../../helpers/getCookie";
 import {useLocRes} from "../../composables/useLocRes";
 import getMiddleByLevel from "../../helpers/getMiddleByLevel";
 
-const user = useState('user');
+const user = useUserInfo();
 const showModal = useDetail();
-const route = useRoute();
-const router = useRouter();
 const resToShow = ref(null);
 const statTable = ref(null);
 const colspan = ref(5);
 const preloadEmail = ref(false);
 const emailComp = shallowRef(null);
-const {$i18n, ssrContext, $showToast, $logOut, $getDate, $print} = useNuxtApp();
-const {t} = $i18n().global;
+const {$t, ssrContext, $showToast, $logOut, $getDate, $print} = useNuxtApp();
+
+const title = computed(()=>  $t('sphere') + ' — ' + $t('stats') + ' — ' + (user.value ? user.value : ''))
 
 useMeta({
-  title: t('sphere') + ' — ' + t('stats')
+  title: title
 })
 
-let token;
-
-if (ssrContext) {
-  token = getCookie(ssrContext.req.headers.cookie, 'token');
-}
-
 const {data, error} = await useAsyncData('stats', () => $fetch('/api/stats',
-    {params: {token: token}}))
+    {headers: useRequestHeaders(["cookie"])}), {initialCache: false})
 
 function showDetail(resId) {
   resToShow.value = resId;

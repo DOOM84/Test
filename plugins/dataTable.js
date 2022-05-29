@@ -1,10 +1,12 @@
 import {defineNuxtPlugin} from '#app';
 //import VueTableLite from 'vue3-table-lite'
-import {
+/*import {
     DataTable,
     TableBody,
     TableHead
-} from "@jobinsjp/vue3-datatable";
+} from "@jobinsjp/vue3-datatable";*/
+import * as dt from '@jobinsjp/vue3-datatable';
+const { DataTable, TableBody, TableHead } = dt;
 //import "@jobinsjp/vue3-datatable/dist/style.scss";
 
 

@@ -70,8 +70,7 @@
 <script setup>
 import {ref} from 'vue';
 
-const {$i18n, $showToast, $logOut} = useNuxtApp();
-const  {t} = $i18n().global;
+const {$t, $showToast, $logOut} = useNuxtApp();
 import {useRouter} from 'vue-router';
 const router = useRouter();
 
@@ -79,11 +78,13 @@ definePageMeta({
   layout: 'admin'
 })
 
+const title = computed(()=>  $t('dashboard') + ' — ' + $t('levels'))
+
 useMeta({
-  title: t('dashboard') + ' — ' + t('levels')
+  title: title
 })
 
-const {data, error} = await useAsyncData('levels', () => $fetch('/api/admin/levels/index'));
+const {data, error} = await useAsyncData('adminLevels', () => $fetch('/api/admin/levels'));
 
 const filtering = ref([]);
 const toFilter = ref(false);
@@ -117,14 +118,12 @@ function addItem() {
 
 async function storeItem() {
 
-  const formData = new FormData();
-  formData.append('data', JSON.stringify(levelToUpdate.value))
   try {
-    $showToast(t('loading'), 'info', 2000);
+    $showToast($t('loading'), 'info', 2000);
     if (mode.value === 'edit') {
       const {result} = await $fetch('/api/admin/levels/edit', {
-        method: 'POST',
-        body: formData,
+        method: 'PUT',
+        body: levelToUpdate.value,
       })
       const ind = data.value.levels.findIndex(item => item.id === result.id);
       data.value.levels[ind] = result;
@@ -133,7 +132,7 @@ async function storeItem() {
     if (mode.value === 'add') {
       const {result} = await $fetch('/api/admin/levels/add', {
         method: 'POST',
-        body: formData,
+        body: levelToUpdate.value,
       })
       data.value.levels.unshift(result);
     }
@@ -142,23 +141,23 @@ async function storeItem() {
 
     closeModal();
 
-    $showToast(t('info_changed'), 'success', 2000);
+    $showToast($t('info_changed'), 'success', 2000);
 
   } catch (e) {
 
     if (e.response.status === 422) {
 
-      $showToast(t(e.response._data.msg), 'error');
+      $showToast($t(e.response._data.msg), 'error');
 
     } else if (e.response.status === 403) {
 
-      $showToast(t('access_d'), 'error');
+      $showToast($t('access_d'), 'error');
       $logOut();
       await router.replace('/404');
 
     } else {
 
-      $showToast(t('error_auth'), 'error', 2000);
+      $showToast($t('error_auth'), 'error', 2000);
 
     }
 
@@ -169,27 +168,24 @@ async function removeItem(dbId) {
   if (confirm('Are you sure?')) {
     try {
 
-      const formData = new FormData();
-      formData.append('id', dbId);
-
-      $showToast(t('loading'), 'info', 2000);
+      $showToast($t('loading'), 'info', 2000);
 
       const {id} = await $fetch('/api/admin/levels/remove', {
-        method: 'POST',
-        body: formData,
+        method: 'DELETE',
+        body: {id: dbId},
       })
 
       data.value.levels.splice(data.value.levels.findIndex(item => item.dbId === id), 1);
 
       filter(null, null);
 
-      $showToast(t('info_deleted'), 'success', 2000);
+      $showToast($t('info_deleted'), 'success', 2000);
 
     } catch (e) {
 
       if (e.response.status === 403) {
 
-        $showToast(t('access_d'), 'error');
+        $showToast($t('access_d'), 'error');
         $logOut();
         await router.replace('/404')
 

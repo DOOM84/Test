@@ -52,11 +52,11 @@
 
 import {computed, ref, onMounted} from 'vue';
 
-const authToken = useState('token');
-const isLoggedIn = useState('isLoggedIn');
-const user = useState('user');
-const {$i18n, $showToast, $logOut} = useNuxtApp();
-const {t} = $i18n().global;
+const authToken = useTokenAuth();
+const isLoggedIn = useIsloggedIn();
+const user = useUserInfo();
+const {$t, $showToast, $logOut} = useNuxtApp();
+//const {t} = $i18n().global;
 const login = ref('');
 const email = ref('');
 const group = ref('');
@@ -79,9 +79,9 @@ onMounted(async () => {
 })
 
 const showMode = computed(() =>
-    mode.value === 'signup' ? t('register') : mode.value === 'login' ? t('login') : t('resetPas'));
+    mode.value === 'signup' ? $t('register') : mode.value === 'login' ? $t('login') : $t('resetPas'));
 
-const showBtnMode = computed(() => mode.value === 'signup' ? t('login') : t('register'));
+const showBtnMode = computed(() => mode.value === 'signup' ? $t('login') : $t('register'));
 
 function setCookies(name, data) {
   let now = new Date();
@@ -112,13 +112,13 @@ async function authorize() {
 
   if (!validateEmail(email.value)) {
     err.value = true;
-    $showToast(t('error_email'), 'error');
+    $showToast($t('error_email'), 'error');
   }
 
   if (mode.value !== 'reset') {
     if (password.value.length < 6) {
       err.value = true;
-      $showToast(t('error_pass_length'), 'error');
+      $showToast($t('error_pass_length'), 'error');
     }
   }
 
@@ -128,17 +128,17 @@ async function authorize() {
 
     if (!strippedLogin || strippedLogin !== login.value || strippedLogin.length < 3) {
       err.value = true;
-      $showToast(t('error_login'), 'error');
+      $showToast($t('error_login'), 'error');
     }
 
     if (!group.value) {
       err.value = true;
-      $showToast(t('error_group'), 'error');
+      $showToast($t('error_group'), 'error');
     }
 
     if (password.value !== passwordConfirmation.value) {
       err.value = true;
-      $showToast(t('error_pass_match'), 'error');
+      $showToast($t('error_pass_match'), 'error');
     }
   }
 
@@ -146,32 +146,31 @@ async function authorize() {
     return
   }
 
-  const formData = new FormData();
-
-  formData.append("email", email.value);
+  const info = {email: email.value}
 
   if (mode.value !== 'reset') {
-    formData.append("password", password.value);
+    //formData.append("password", password.value);
+    info.password = password.value
   }
 
   if (mode.value === 'signup') {
-    formData.append("login", login.value);
-    formData.append("group", group.value);
-    formData.append("passwordConfirmation", passwordConfirmation.value);
+    info.login = login.value;
+    info.group = group.value;
+    info.passwordConfirmation = passwordConfirmation.value;
   }
 
   try {
     showIcon.value = true
     const data = mode.value === 'signup' ? await $fetch('/api/auth/signup', {
       method: 'POST',
-      body: formData,
+      body: info,
     }) : mode.value === 'login' ?
         await $fetch('/api/auth/login', {
           method: 'POST',
-          body: formData,
+          body: info,
         }) : await $fetch('/api/auth/reset', {
           method: 'POST',
-          body: formData,
+          body: info,
         })
 
     if (mode.value !== 'reset') {
@@ -179,8 +178,8 @@ async function authorize() {
       authToken.value = data.token;
       isLoggedIn.value = !!data.token;
       user.value = {
-        name: data.login, /*email: data.email,*/
-        level: data.level, /*email: data.email,*/
+        name: data.login,
+        level: data.level,
         //id: data.id
       }
 
@@ -200,7 +199,7 @@ async function authorize() {
 
     } else {
       showIcon.value = false;
-      $showToast(t('email_sent'), 'success');
+      $showToast($t('email_sent'), 'success');
       mode.value = 'login';
     }
   } catch (error) {
@@ -213,21 +212,21 @@ async function authorize() {
 
       if (error.response.status !== 422) {
 
-        $showToast(t('error_email_exists'), 'error');
+        $showToast($t('error_email_exists'), 'error');
 
       } else {
 
-        $showToast(t(error.response.data.msg), 'error');
+        $showToast($t(error.response.data.msg), 'error');
       }
     } else {
 
       if (error.response.status !== 422) {
 
-        $showToast(t('error_no_user'), 'error');
+        $showToast($t('error_no_user'), 'error');
 
       } else {
 
-        $showToast(t(error.response.data.msg), 'error');
+        $showToast($t(error.response.data.msg), 'error');
       }
 
     }

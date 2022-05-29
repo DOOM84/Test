@@ -164,8 +164,7 @@
 import {ref} from 'vue';
 import Multiselect from '@vueform/multiselect'
 
-const {$i18n, $showToast, $logOut} = useNuxtApp();
-const {t} = $i18n().global;
+const {$t, $showToast, $logOut} = useNuxtApp();
 import {useRouter} from 'vue-router';
 
 const router = useRouter();
@@ -174,8 +173,10 @@ definePageMeta({
   layout: 'admin'
 })
 
+const title = computed(()=>  $t('dashboard') + ' — ' + $t('users'))
+
 useMeta({
-  title: t('dashboard') + ' — ' + t('users')
+  title: title
 })
 
 const filtering = ref([]);
@@ -187,7 +188,7 @@ function filter(fTerm, dir) {
   toFilter.value = true;
 }
 
-const {data, error} = await useAsyncData('users', () => $fetch('/api/admin/users/index'));
+const {data, error} = await useAsyncData('users', () => $fetch('/api/admin/users'));
 
 const userToUpdate = ref({customClaims: {admin: false}, disabled: false, groups: []});
 const showDlg = ref(false);
@@ -218,14 +219,12 @@ async function storeItem() {
 
   const {levelName, fullGroups, ...updatedRest} = userToUpdate.value;
 
-  const formData = new FormData();
-  formData.append('data', JSON.stringify(updatedRest))
   try {
-    $showToast(t('loading'), 'info', 2000);
+    $showToast($t('loading'), 'info', 2000);
     if (mode.value === 'edit') {
       const {result} = await $fetch('/api/admin/users/edit', {
-        method: 'POST',
-        body: formData,
+        method: 'PUT',
+        body: updatedRest,
       })
       const ind = data.value.users.findIndex(item => item.uid === result.uid);
 
@@ -244,7 +243,7 @@ async function storeItem() {
     if (mode.value === 'add') {
       const {result} = await $fetch('/api/admin/users/add', {
         method: 'POST',
-        body: formData,
+        body: updatedRest,
       })
 
       userToUpdate.value.fullGroups = data.value.groups
@@ -267,23 +266,23 @@ async function storeItem() {
 
     closeModal();
 
-    $showToast(t('info_changed'), 'success', 2000);
+    $showToast($t('info_changed'), 'success', 2000);
 
   } catch (e) {
 
     if (e.response.status === 422) {
 
-      $showToast(t(e.response._data.msg), 'error');
+      $showToast($t(e.response._data.msg), 'error');
 
     } else if (e.response.status === 403) {
 
-      $showToast(t('access_d'), 'error');
+      $showToast($t('access_d'), 'error');
       $logOut();
       await router.replace('/404')
 
     } else {
 
-      $showToast(t('error_email_exists'), 'error', 2000);
+      $showToast($t('error_email_exists'), 'error', 2000);
 
     }
 
@@ -296,28 +295,25 @@ async function removeItem(userId) {
   if (confirm('Are you sure?')) {
 
     try {
-      const formData = new FormData();
 
-      formData.append('data', JSON.stringify({id: userId}))
-
-      $showToast(t('loading'), 'info', 2000);
+      $showToast($t('loading'), 'info', 2000);
 
       const {id} = await $fetch('/api/admin/users/remove', {
-        method: 'POST',
-        body: formData,
+        method: 'DELETE',
+        body: {id: userId},
       })
 
       data.value.users.splice(data.value.users.findIndex(item => item.uid === id), 1);
 
       filter(null, null);
 
-      $showToast(t('info_deleted'), 'success', 2000);
+      $showToast($t('info_deleted'), 'success', 2000);
 
     } catch (e) {
 
       if (e.response.status === 403) {
         $logOut();
-        $showToast(t('access_d'), 'error');
+        $showToast($t('access_d'), 'error');
 
         await router.replace('/404')
 

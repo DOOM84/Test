@@ -1,5 +1,7 @@
 import {defineNuxtPlugin, useState} from '#app'
+//import {useI18n} from 'vue-i18n';
 import {createI18n} from 'vue-i18n';
+
 import Lang from '../helpers/lang';
 
 function customRule(choice, choicesLength, orgRule) {
@@ -33,7 +35,7 @@ function customRule(choice, choicesLength, orgRule) {
 export default defineNuxtPlugin((nuxtApp) => {
     const locale = useState('locale').value;
 
-    const messages = Lang;
+    // const messages = Lang;
 
     const i18n = createI18n({
         pluralizationRules: {
@@ -43,10 +45,21 @@ export default defineNuxtPlugin((nuxtApp) => {
         globalInjection: true,
         locale: locale, // set locale
         fallbackLocale: 'ua', // set fallback locale
-        messages, // set locale messages
+        messages : Lang, // set locale messages
     })
 
-     //console.log(i18n.global.t('register'));
+    const { t, tc } = i18n.global;
+
+    nuxtApp.provide('t', (term) => t(term));
+
+    nuxtApp.provide('tc', (term, count) => tc(term, count));
+
+    nuxtApp.provide('gLoc', () => i18n.global.locale);
+
+    nuxtApp.provide('setGloc', (loc) => {
+        i18n.global.locale = loc;
+    });
+
     nuxtApp.vueApp.use(i18n);
 
     nuxtApp.provide('i18n', () => i18n)

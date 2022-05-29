@@ -21,16 +21,15 @@ const player = ref(null);
 const playerOn = ref(true);
 
 const sounds = ref([
-
-      'https://test.aim2.top/music/Moon.mp3',
-      'https://test.aim2.top/music/dyunah.mp3',
-      'https://test.aim2.top/music/mazurka1.mp3',
-      'https://test.aim2.top/music/bis.mp3',
-      'https://test.aim2.top/music/mazurka2.mp3',
-      'https://test.aim2.top/music/preludia1.mp3',
-      'https://test.aim2.top/music/preludia2.mp3',
-      'https://test.aim2.top/music/preludia4.mp3',
-      'https://test.aim2.top/music/preludia5.mp3'
+      '/music/Moon.mp3',
+      '/music/dyunah.mp3',
+      '/music/mazurka1.mp3',
+      '/music/bis.mp3',
+      '/music/mazurka2.mp3',
+      '/music/preludia1.mp3',
+      '/music/preludia2.mp3',
+      '/music/preludia4.mp3',
+      '/music/preludia5.mp3'
     ]
 )
 

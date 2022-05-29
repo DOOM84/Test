@@ -152,27 +152,26 @@
   </main>
 </template>
 <script setup>
-import {ref, computed, onMounted, watch} from 'vue';
+import {ref, computed, watch} from 'vue';
 import Multiselect from '@vueform/multiselect'
-
-const cached = useCachedinfo();
-const {$i18n, $showToast, $logOut} = useNuxtApp();
-const {t} = $i18n().global;
+const {$t, $showToast, $logOut} = useNuxtApp();
 import {useRouter} from 'vue-router';
 const inputAnswer = ref(false);
 
 const router = useRouter();
 
+const {data, error} = await useAsyncData('adminTasks', () => $fetch('/api/admin/tasks'));
+
 definePageMeta({
   layout: 'admin'
 })
 
+const title = computed(()=>  $t('dashboard') + ' — ' + $t('tests'))
+
 useMeta({
-  title: t('dashboard') + ' — ' + t('tests')
+  title: title
 })
 
-//const {data, error} = await useAsyncData('tasks', () => $fetch('/api/admin/tasks/index'));
-const data = ref(null);
 const filtering = ref([]);
 const toFilter = ref(false);
 
@@ -187,23 +186,6 @@ const taskToUpdate = ref({//status: false,
 });
 const showDlg = ref(false);
 const mode = ref(null);
-
-
-onMounted(async () => {
-
-  const index = cached.value.findIndex((element) => element['adminTasks']);
-  if (index !== -1) {
-
-    data.value = {...cached.value[index]['adminTasks']}
-
-  } else {
-
-    data.value = await $fetch('/api/admin/tasks/index');
-    cached.value.push({'adminTasks': data.value})
-  }
-
-})
-
 
 function closeModal() {
   showDlg.value = false;
@@ -233,7 +215,6 @@ function updateItem(task) {
 function addItem() {
   mode.value = 'add';
   showDlg.value = true;
-  //taskToUpdate.value.status = false;
   taskToUpdate.value.answers = [];
   taskToUpdate.value.topicsIds = [];
   taskToUpdate.value.sourcesIds = [];
@@ -267,15 +248,12 @@ async function storeItem() {
     delete updatedRest.type;
   }
 
-
-  const formData = new FormData();
-  formData.append('data', JSON.stringify(updatedRest))
   try {
-    $showToast(t('loading'), 'info', 2000);
+    $showToast($t('loading'), 'info', 2000);
     if (mode.value === 'edit') {
       const {result} = await $fetch('/api/admin/tasks/edit', {
-        method: 'POST',
-        body: formData,
+        method: 'PUT',
+        body: updatedRest,
       })
       const ind = data.value.tasks.findIndex(item => item.dbId === result.dbId);
 
@@ -291,7 +269,7 @@ async function storeItem() {
     if (mode.value === 'add') {
       const {result} = await $fetch('/api/admin/tasks/add', {
         method: 'POST',
-        body: formData,
+        body: updatedRest,
       })
 
       taskToUpdate.value.topics = data.value.topics.filter(topic => topicsIds.includes(topic.id));
@@ -308,29 +286,27 @@ async function storeItem() {
 
     }
 
-    updateCache();
-
     filter(null, null);
 
     closeModal();
 
-    $showToast(t('info_changed'), 'success', 2000);
+    $showToast($t('info_changed'), 'success', 2000);
 
   } catch (e) {
 
     if (e.response.status === 422) {
 
-      $showToast(t(e.response._data.msg), 'error');
+      $showToast($t(e.response._data.msg), 'error');
 
     } else if (e.response.status === 403) {
       $logOut();
-      $showToast(t('access_d'), 'error');
+      $showToast($t('access_d'), 'error');
 
       await router.replace('/404')
 
     } else {
 
-      $showToast(t('error_auth'), 'error', 2000);
+      $showToast($t('error_auth'), 'error', 2000);
 
     }
 
@@ -342,43 +318,30 @@ async function removeItem(dbId) {
   if (confirm('Are you sure?')) {
     try {
 
-      const formData = new FormData();
-      formData.append('id', dbId);
-
-      $showToast(t('loading'), 'info', 2000);
+      $showToast($t('loading'), 'info', 2000);
 
       const {id} = await $fetch('/api/admin/tasks/remove', {
-        method: 'POST',
-        body: formData,
+        method: 'DELETE',
+        body: {id: dbId},
       })
 
       data.value.tasks.splice(data.value.tasks.findIndex(item => item.dbId === id), 1);
 
-      updateCache();
-
       filter(null, null);
 
 
-      $showToast(t('info_deleted'), 'success', 2000);
+      $showToast($t('info_deleted'), 'success', 2000);
 
     } catch (e) {
 
       if (e.response.status === 403) {
         $logOut();
-        $showToast(t('access_d'), 'error');
+        $showToast($t('access_d'), 'error');
 
         await router.replace('/404')
 
       }
     }
-  }
-}
-
-function updateCache() {
-
-  const index = cached.value.findIndex((element) => element['adminTasks']);
-  if (index !== -1) {
-    cached.value[index]['adminTasks'].tasks = data.value.tasks;
   }
 }
 

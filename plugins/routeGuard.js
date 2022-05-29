@@ -1,17 +1,15 @@
-import getCookie from "~/helpers/getCookie";
+//import getCookie from "~/helpers/getCookie";
 
 export default defineNuxtPlugin(async ({ssrContext, $logOut}) => {
     const router = useRouter();
 
-    let token = null;
-    const user = useState("user");
+    const user = useUserInfo();
+    const isLoggedIn = useIsloggedIn();
 
     if (process.server && ssrContext) {
 
         const {res, url} = ssrContext;
         const {path} = router.resolve(url);
-
-        token = getCookie(ssrContext.req.headers.cookie, 'token');
 
         const toName = path.split("/");
 
@@ -19,42 +17,47 @@ export default defineNuxtPlugin(async ({ssrContext, $logOut}) => {
 
             if (toName[1] === 'admin') {
 
-                //try {
-                if (!token) {
-                    await Promise.reject(Error());
-                }
-
-                const data = await $fetch('/api/user',
-                    {params: {token: token}})
-
-                if (data) {
-                    user.value = {
-                        name: data.login,
-                        level: data.level,
-                    };
-                }
-
                 const {access} = await $fetch('/api/check',
-                    {params: {token: token}})
+                    {
+                        headers: useRequestHeaders(["cookie"]),
+                    })
 
                 if (!access) {
                     await Promise.reject(Error());
                 }
-            } else {
-
-
-                if (!token) {
-                    await Promise.reject(Error());
-                }
 
                 const data = await $fetch('/api/user',
-                    {params: {token: token}})
+                    {
+                        headers: useRequestHeaders(["cookie"]),
+                    })
 
                 if (data) {
                     user.value = {
                         name: data.login,
                         level: data.level,
                     };
+
+                    isLoggedIn.value = true;
+                }
+
+            }if (toName[1] === 'test') {
+
+                res.writeHead(302, {Location: "/"});
+                res.end();
+
+            } else {
+
+                const data = await $fetch('/api/user',
+                    {
+                        headers: useRequestHeaders(["cookie"]),
+                    })
+
+                if (data) {
+                    user.value = {
+                        name: data.login,
+                        level: data.level,
+                    };
+                    isLoggedIn.value = true;
                 } else {
                     $logOut();
                     if (path !== "/") {

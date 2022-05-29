@@ -74,8 +74,8 @@
 <script setup>
 import {onMounted, ref} from 'vue';
 const cached = useCachedinfo();
-const {$i18n} = useNuxtApp();
-const {t} = $i18n().global;
+const {$t, $logOut, $showToast} = useNuxtApp();
+const router = useRouter();
 
 const data = ref(null)
 
@@ -90,8 +90,17 @@ onMounted(async () => {
   if(index !== -1){
     data.value = cached.value[index][props.resId]
   }else{
-    data.value  = await $fetch('/api/detail', {params: {resId: props.resId}});
-    cached.value.push({[props.resId]: data.value})
+    try {
+      data.value  = await $fetch('/api/detail', {params: {resId: props.resId}});
+      cached.value.push({[props.resId]: data.value})
+    }catch (e) {
+      if(e.response.status === 401){
+        $showToast($t('error_auth'), 'error');
+        $logOut();
+        router.replace('/')
+      }
+    }
+
   }
 
   })

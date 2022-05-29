@@ -6,11 +6,13 @@
 </template>
 
 <script setup>
-const {$i18n} = useNuxtApp();
-const {t} = $i18n().global;
+
+const {$t} = useNuxtApp();
+
+const title = computed(()=>  $t('sphere') + ' — ' + $t('notFound'))
 
 useMeta({
-  title: t('sphere') + ' — ' + t('notFound')
+  title: title
 })
 
 definePageMeta({

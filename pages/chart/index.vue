@@ -25,41 +25,15 @@
 </template>
 
 <script setup>
-import {useRouter, useRoute} from "vue-router";
-import getCookie from "../../helpers/getCookie";
-const user = useState('user');
-const route = useRoute();
-const router = useRouter();
-const {$i18n, ssrContext} = useNuxtApp();
-const {t} = $i18n().global
-
-let token;
-
-if (ssrContext) {
-  token = getCookie(ssrContext.req.headers.cookie, 'token');
-}
+const {$t} = useNuxtApp();
 
 const {data, error} = await useAsyncData('chart', () => $fetch('/api/chart',
-    {params: {token: token}}))
+    {headers: useRequestHeaders(["cookie"])}), {initialCache: false})
 
-/*if (ssrContext) {
-  const {res, url} = ssrContext;
-  if (!token) {
-    res.writeHead(302, {
-      Location: '/'
-    });
-    res.end();
-  }
-} else {
-  if (error.value) {
-    $showToast('Вы не авторизованы', 'error', 2000);
-    $logOut();
-    router.replace('/404')
-  }
-}*/
+const title = computed(()=>  $t('sphere') + ' — ' + $t('grInform'))
 
 useMeta({
-  title: t('sphere') + ' — ' + t('grInform')
+  title: title
 })
 </script>
 

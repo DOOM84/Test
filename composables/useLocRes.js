@@ -4,23 +4,22 @@ export const useLocRes = (origRes)=>{
 
     //const nuxtApp = useNuxtApp();
 
-    const {$i18n} = useNuxtApp();
-    const {t} = $i18n().global;
+    const {$t} = useNuxtApp();
 
     if(origRes === 'Добре'){
-        return t('good')
+        return $t('good')
     }
 
     if(origRes === 'Задовільно'){
-        return t('satisfactory')
+        return $t('satisfactory')
     }
 
     if(origRes === 'Незадовільно'){
-        return t('failing')
+        return $t('failing')
     }
 
     if(origRes === 'Відмінно'){
-        return t('excellent')
+        return $t('excellent')
     }
 
     return origRes;

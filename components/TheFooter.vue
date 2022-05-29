@@ -4,3 +4,7 @@
   </footer>
 </template>
 
+<script setup>
+const {$t} = useNuxtApp();
+</script>
+

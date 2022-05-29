@@ -1,12 +1,13 @@
 import {defineNuxtPlugin, useState} from '#app'
 
 export default defineNuxtPlugin(nuxtApp => {
-    const user = useState("user");
-    const isLoggedIn = useState("isLoggedIn");
-    const authToken = useState("token");
-    const isAdmin = useState("isAdmin");
+    const user = useUserInfo();
+    const isLoggedIn = useIsloggedIn();
+    const authToken = useTokenAuth();
+    const isAdmin = useIsAdmin();
     const canPass = useCanpass();
     const sideLogin = useSidelogin();
+
     nuxtApp.provide('logOut', async () => {
 
         isLoggedIn.value = false;

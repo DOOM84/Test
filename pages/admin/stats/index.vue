@@ -26,7 +26,7 @@
     <AdminModalWrap @closeDlg="closeModal" mWidth="100%" origWidth="1200px" :showDlg="showGroupChartModal">
       <h2 class="center">{{ $t('group') }}: {{ checkedGroupName }}</h2>
       <div v-if="groupChartStats && groupChartStats.results">
-        <the-group-chart :group="checkedGroupName" :results="groupChartStats.results" type="line"></the-group-chart>
+        <the-group-chart :group="checkedGroupName" :groupId="checkedGroup" :results="groupChartStats.results" type="line"></the-group-chart>
       </div>
       <the-loader v-else/>
     </AdminModalWrap>
@@ -230,9 +230,8 @@ import Multiselect from '@vueform/multiselect';
 import {useLocRes} from '../../../composables/useLocRes';
 import getMiddleByLevel from "../../../helpers/getMiddleByLevel";
 
-const {$i18n, $showToast, $getDate, $print, $logOut, $scrollTo} = useNuxtApp();
+const {$t, $showToast, $getDate, $print, $logOut, $scrollTo} = useNuxtApp();
 
-const {t} = $i18n().global;
 import {useRouter} from 'vue-router';
 
 const router = useRouter();
@@ -261,12 +260,11 @@ definePageMeta({
   layout: 'admin'
 })
 
+const title = computed(()=>  $t('dashboard') + ' — ' + $t('stats'))
+
 useMeta({
-  title: t('dashboard') + ' — ' + t('stats')
+  title: title
 })
-
-//const {data, error} = await useLazyAsyncData('adminStats', () => $fetch('/api/admin/stats/index'));
-
 
 function closeModal() {
   showModal.value = false;
@@ -275,7 +273,7 @@ function closeModal() {
 }
 
 onMounted(async () => {
-  data.value = await $fetch('/api/admin/stats/index');
+  data.value = await $fetch('/api/admin/stats');
 })
 
 async function showGroupStats() {
@@ -291,13 +289,13 @@ async function showGroupStats() {
 
     if (e.response.status === 403) {
       $logOut();
-      $showToast(t('access_d'), 'error');
+      $showToast($t('access_d'), 'error');
 
       await router.replace('/404')
 
     } else {
 
-      $showToast(t('error_auth'), 'error', 2000);
+      $showToast($t('error_auth'), 'error', 2000);
 
     }
   }
@@ -331,13 +329,13 @@ async function showUserStats() {
 
     if (e.response.status === 403) {
       $logOut();
-      $showToast(t('access_d'), 'error');
+      $showToast($t('access_d'), 'error');
 
       await router.replace('/404')
 
     } else {
 
-      $showToast(t('error_auth'), 'error', 2000);
+      $showToast($t('error_auth'), 'error', 2000);
 
     }
   }
@@ -355,13 +353,13 @@ async function showUserChart() {
 
     if (e.response.status === 403) {
       $logOut();
-      $showToast(t('access_d'), 'error');
+      $showToast($t('access_d'), 'error');
 
       await router.replace('/404')
 
     } else {
 
-      $showToast(t('error_auth'), 'error', 2000);
+      $showToast($t('error_auth'), 'error', 2000);
 
     }
   }

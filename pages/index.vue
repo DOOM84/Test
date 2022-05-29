@@ -37,12 +37,10 @@
 </template>
 
 <script setup>
-import {ref, onMounted, watch} from 'vue';
-import {useRouter, useRoute} from "vue-router";
-const user = useState('user');
+import {ref, onMounted, watch, computed} from 'vue';
+const user = useUserInfo();
 const showModal = useSign();
-const {$i18n, $logOut, $showToast} = useNuxtApp();
-const {t} = $i18n().global;
+const {$t, $logOut, $showToast} = useNuxtApp();
 const  userGroups = ref(null);
 const  userTopics = ref(null);
 const showIcon = ref(false);
@@ -50,11 +48,12 @@ const group = ref('');
 const topic = ref('');
 const toTest = ref(false);
 const canPass = useCanpass();
-const route = useRoute();
 const router = useRouter();
 
+const title = computed(()=>  $t('sphere') + ' — ' + $t('welcome'))
+
 useMeta({
-  title: t('sphere') + ' — ' + t('welcome')
+  title: title
 })
 
 
@@ -91,7 +90,7 @@ async function toBegin(){
 function begin(){
 
   if(!group.value || !topic.value){
-    $showToast(t('choose'), 'error');
+    $showToast($t('choose'), 'error');
     return
   }
 

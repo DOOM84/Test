@@ -70,19 +70,18 @@ const showOverlay = ref(false);
 
 const loc = useState('locale');
 
-const {$i18n, $logOut} = useNuxtApp();
-const {t} = $i18n().global
+const {$setGloc, $t, $logOut} = useNuxtApp();
 
-const isLoggedIn = useState('isLoggedIn');
+const isLoggedIn = useIsloggedIn();
 
-const user = useState('user');
+const user = useUserInfo();
 
 const sideNav = ref(null);
 const overlay = ref(null);
 
 
 function setLocale(name, data) {
-  $i18n().global.locale = data;
+  $setGloc(data);
   loc.value = data;
   let now = new Date();
   now.setTime(now.getTime() + 1 * 3600 * 1000 * 24 * 30);

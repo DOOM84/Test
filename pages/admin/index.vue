@@ -18,18 +18,19 @@
   </main>
 </template>
 <script setup>
-const {$i18n} = useNuxtApp();
-const {t} = $i18n().global;
+const {$t} = useNuxtApp();
 
 definePageMeta({
   layout: 'admin'
 })
 
+const title = computed(()=>  $t('dashboard'))
+
 useMeta({
-  title: t('dashboard')
+  title: title
 })
 
-const {data, error} = await useAsyncData('admin', () => $fetch('/api/admin/index'));
+const {data, error} = await useAsyncData('admin', () => $fetch('/api/admin'), {initialCache: false});
 
 </script>
 
